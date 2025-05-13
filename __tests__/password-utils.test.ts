@@ -15,8 +15,7 @@ describe('Password Utilities', () => {
 
     it('should generate salt of expected length', () => {
       const salt = generateSalt();
-      const decodedSalt = Buffer.from(salt, 'base64');
-      expect(decodedSalt.length).toBe(32);
+      expect(salt.length).toBe(32);
     });
   });
 
@@ -43,6 +42,14 @@ describe('Password Utilities', () => {
     it('should throw error for empty password', () => {
       expect(() => hashPassword('')).toThrow('Password cannot be empty');
     });
+
+    it('should allow hashing with provided salt', () => {
+      const salt = generateSalt();
+      const { hashedPassword, salt: returnedSalt } = hashPassword(password, salt);
+      
+      expect(returnedSalt).toEqual(salt);
+      expect(hashedPassword).toBeTruthy();
+    });
   });
 
   // Test password verification
@@ -64,7 +71,7 @@ describe('Password Utilities', () => {
     });
 
     it('should reject empty inputs', () => {
-      const isValid = verifyPassword('', '', '');
+      const isValid = verifyPassword('', '', Buffer.from(''));
       expect(isValid).toBe(false);
     });
   });
