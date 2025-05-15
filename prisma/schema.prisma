@@ -1,4 +1,4 @@
-// User Authentication and Job Favorites Schema
+// Database Configuration for User Authentication
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -8,39 +8,36 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// User model with secure authentication and profile management
+// User Model with Comprehensive Authentication Fields
 model User {
-  // UUID-based unique identifier
-  id             String      @id @default(uuid())
+  // Auto-incrementing integer ID with explicit configuration
+  id             Int         @id @default(autoincrement())
   
-  // Email with unique constraint to prevent duplicate registrations
+  // Email with explicit unique constraint
   email          String      @unique
   
-  // Hashed password for security
+  // Securely hashed password field
   password       String
   
-  // Profile information
-  name           String?
-  profileImage   String?
-  
-  // Automatic timestamp management
+  // Automatic timestamp tracking
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
   
   // Additional user metadata
+  name           String?
+  profileImage   String?
   lastLogin      DateTime?
-  isActive       Boolean     @default(true)
   
   // User authorization and job interaction
   role           UserRole    @default(USER)
   savedJobs      SavedJob[]
 }
 
-// Saved Job model to track user's favorite job postings
+// Saved Job Tracking Model
 model SavedJob {
-  id            String   @id @default(uuid())
-  userId        String
-  jobId         String   // External job identifier
+  id            Int      @id @default(autoincrement())
+  userId        Int
+  jobId         String   
   jobTitle      String
   companyName   String
   savedAt       DateTime @default(now())
@@ -51,7 +48,7 @@ model SavedJob {
   @@unique([userId, jobId])
 }
 
-// User role enumeration for authorization
+// User Role Enumeration
 enum UserRole {
   USER
   ADMIN
