@@ -2,12 +2,11 @@ import { PrismaClient } from '@prisma/client'
 import { faker } from '@faker-js/faker'
 import * as bcrypt from 'bcrypt'
 
-// Fake data generators for testing
-const createFakeUser = async () => ({
+// Secure user data generation
+const createSecureUserData = async () => ({
   email: faker.internet.email(),
   name: faker.person.fullName(),
-  password: await bcrypt.hash(faker.internet.password(), 10),
-  role: 'USER' as const,
+  password: await bcrypt.hash(faker.internet.password(), 10)
 })
 
 describe('User Database Schema', () => {
@@ -21,54 +20,58 @@ describe('User Database Schema', () => {
     await prisma.$disconnect()
   })
 
-  it('should create a user with UUID', async () => {
-    const userData = await createFakeUser()
-    const user = await prisma.user.create({
-      data: userData,
-    })
+  it('should create a user with auto-incrementing ID', async () => {
+    const userData = await createSecureUserData()
+    const user = await prisma.user.create({ data: userData })
 
-    expect(user).toBeDefined()
-    expect(user.id).toBeTruthy()
-    expect(user.id.length).toBeGreaterThan(10) // UUID validation
-    expect(user.email).toBe(userData.email)
+    expect(user.id).toBeDefined()
+    expect(typeof user.id).toBe('number')
+    expect(user.id).toBeGreaterThan(0)
   })
 
-  it('should automatically set createdAt timestamp', async () => {
-    const userData = await createFakeUser()
-    const user = await prisma.user.create({
-      data: userData,
-    })
+  it('should enforce unique email constraint', async () => {
+    const userData = await createSecureUserData()
+    
+    // First user creation should succeed
+    const firstUser = await prisma.user.create({ data: userData })
+    expect(firstUser).toBeTruthy()
 
-    expect(user.createdAt).toBeTruthy()
-    expect(user.createdAt instanceof Date).toBeTruthy()
-  })
-
-  it('should prevent duplicate email registrations', async () => {
-    const userData = await createFakeUser()
-    await prisma.user.create({ data: userData })
-
+    // Second user with same email should fail
     await expect(
       prisma.user.create({ data: userData })
     ).rejects.toThrow()
   })
 
-  it('should hash password before storing', async () => {
-    const rawPassword = 'testPassword123!'
-    const userData = await createFakeUser()
+  it('should automatically set createdAt timestamp', async () => {
+    const userData = await createSecureUserData()
+    const user = await prisma.user.create({ data: userData })
+
+    expect(user.createdAt).toBeTruthy()
+    expect(user.createdAt instanceof Date).toBeTruthy()
+  })
+
+  it('should store hashed password', async () => {
+    const rawPassword = 'SecurePassword123!'
+    const hashedPassword = await bcrypt.hash(rawPassword, 10)
     
-    const user = await prisma.user.create({
-      data: {
-        ...userData,
-        password: await bcrypt.hash(rawPassword, 10)
-      }
+    const userData = await createSecureUserData()
+    const user = await prisma.user.create({ 
+      data: { 
+        ...userData, 
+        password: hashedPassword 
+      } 
     })
 
     expect(user.password).not.toBe(rawPassword)
-    expect(user.password.length).toBeGreaterThan(10)
+    expect(user.password.length).toBeGreaterThan(20)
+    
+    // Verify password can be compared
+    const isPasswordValid = await bcrypt.compare(rawPassword, user.password)
+    expect(isPasswordValid).toBeTruthy()
   })
 
-  it('should create a saved job for a user', async () => {
-    const userData = await createFakeUser()
+  it('should create and cascade delete saved jobs', async () => {
+    const userData = await createSecureUserData()
     const user = await prisma.user.create({ data: userData })
 
     const savedJob = await prisma.savedJob.create({
@@ -80,29 +83,15 @@ describe('User Database Schema', () => {
       },
     })
 
-    expect(savedJob).toBeDefined()
     expect(savedJob.userId).toBe(user.id)
-  })
 
-  it('should cascade delete saved jobs when user is deleted', async () => {
-    const userData = await createFakeUser()
-    const user = await prisma.user.create({ data: userData })
-
-    await prisma.savedJob.create({
-      data: {
-        userId: user.id,
-        jobId: faker.string.uuid(),
-        jobTitle: faker.company.buzzPhrase(),
-        companyName: faker.company.name(),
-      },
-    })
-
+    // Cascade delete test
     await prisma.user.delete({ where: { id: user.id } })
-
-    const remainingSavedJobs = await prisma.savedJob.findMany({
-      where: { userId: user.id },
+    
+    const remainingJobs = await prisma.savedJob.findMany({
+      where: { userId: user.id }
     })
 
-    expect(remainingSavedJobs.length).toBe(0)
+    expect(remainingJobs.length).toBe(0)
   })
 })
