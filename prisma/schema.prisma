@@ -1,0 +1,55 @@
+// Database schema for user authentication and job favorites
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// User model with authentication and preferences
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique @db.VarChar(255)
+  password  String   @db.VarChar(255)
+  firstName String?  @db.VarChar(100)
+  lastName  String?  @db.VarChar(100)
+  
+  // Authentication and account management
+  emailVerified DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Job favorites and user preferences
+  savedJobs     SavedJob[]
+  
+  // Optional profile settings
+  profileImage  String?
+  location      String?
+  
+  // Account status
+  isActive      Boolean   @default(true)
+  role          UserRole  @default(USER)
+}
+
+// Saved job model to track user's favorite jobs
+model SavedJob {
+  id         String   @id @default(cuid())
+  userId     String
+  jobId      String
+  jobTitle   String
+  company    String
+  savedAt    DateTime @default(now())
+  
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, jobId])
+}
+
+// User role enumeration for access control
+enum UserRole {
+  USER
+  ADMIN
+}
