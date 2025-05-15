@@ -1,0 +1,43 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Uncomment and configure your database provider
+// datasource db {
+//   provider = "postgresql"
+//   url      = env("DATABASE_URL")
+// }
+
+// User model for authentication and profile management
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  passwordHash  String
+  profileImage  String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  savedJobs     SavedJob[]
+  
+  @@index([email])
+}
+
+// Saved job model to track user's favorite job postings
+model SavedJob {
+  id            String    @id @default(cuid())
+  userId        String
+  jobId         String    
+  jobTitle      String
+  company       String
+  location      String?
+  savedAt       DateTime  @default(now())
+  
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, jobId])
+  @@index([userId])
+}
