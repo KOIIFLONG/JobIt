@@ -8,37 +8,37 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// User model with comprehensive authentication and profile fields
+// User model with secure authentication and profile management
 model User {
-  id            String      @id @default(cuid())
-  email         String      @unique
-  name          String?
-  password      String
-  profileImage  String?
+  // UUID-based unique identifier
+  id             String      @id @default(uuid())
   
-  // Authentication and security fields
-  emailVerified DateTime?
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
+  // Email with unique constraint to prevent duplicate registrations
+  email          String      @unique
   
-  // Authorization and role management
-  role          UserRole   @default(USER)
+  // Hashed password for security
+  password       String
   
-  // Job saving and interaction tracking
-  savedJobs     SavedJob[]
+  // Profile information
+  name           String?
+  profileImage   String?
   
-  // Optional additional profile details
-  location      String?
-  bio           String?
+  // Automatic timestamp management
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
   
-  // Login tracking and security
-  lastLogin     DateTime?
-  isActive      Boolean    @default(true)
+  // Additional user metadata
+  lastLogin      DateTime?
+  isActive       Boolean     @default(true)
+  
+  // User authorization and job interaction
+  role           UserRole    @default(USER)
+  savedJobs      SavedJob[]
 }
 
 // Saved Job model to track user's favorite job postings
 model SavedJob {
-  id            String   @id @default(cuid())
+  id            String   @id @default(uuid())
   userId        String
   jobId         String   // External job identifier
   jobTitle      String
