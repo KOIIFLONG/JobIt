@@ -1,0 +1,51 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Use SQLite for development, can be easily switched to PostgreSQL/MySQL for production
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// User model with comprehensive authentication and profile fields
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  username      String?   @unique
+  password      String    // Hashed password
+  firstName     String?
+  lastName      String?
+  profilePicUrl String?
+  
+  // Authentication and security fields
+  emailVerified DateTime?
+  lastLogin     DateTime?
+  
+  // Saved jobs relationship
+  savedJobs     SavedJob[]
+  
+  // Timestamps for tracking
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// Model for tracking saved jobs
+model SavedJob {
+  id            String   @id @default(cuid())
+  userId        String
+  jobId         String   // External job identifier from job search API
+  jobTitle      String
+  companyName   String
+  jobUrl        String?
+  savedAt       DateTime @default(now())
+  
+  // Relationship to User
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Ensure unique constraint on user-job combination
+  @@unique([userId, jobId])
+}
