@@ -1,7 +1,16 @@
 import bcrypt from 'bcrypt';
 import { PrismaClient, User as PrismaUser } from '@prisma/client';
 
-const prisma = new PrismaClient();
+// Ensure Prisma client is created only once
+const globalForPrisma = global as unknown as { prisma: PrismaClient };
+
+export const prisma =
+  globalForPrisma.prisma ||
+  new PrismaClient({
+    log: ['query'],
+  });
+
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
 // Input validation interface
 export interface UserCreateInput {
@@ -107,6 +116,3 @@ export class User {
     return prisma.user.findUnique({ where: { email } });
   }
 }
-
-// Export Prisma client for use in other parts of the application
-export { prisma };
