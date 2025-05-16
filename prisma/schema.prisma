@@ -1,0 +1,51 @@
+// Database schema for JobIt user authentication and job favorites
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// User model with comprehensive authentication and profile details
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  username      String?   @unique
+  password      String    // Hashed password
+  firstName     String?
+  lastName      String?
+  profileImage  String?
+  
+  // Authentication and security fields
+  emailVerified DateTime?
+  lastLogin     DateTime?
+  
+  // Job favorites and interactions
+  savedJobs     SavedJob[]
+  
+  // Account metadata
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Optional additional fields for profile
+  location      String?
+  bio           String?
+  skills        String[]
+}
+
+// Model to track user's saved job postings
+model SavedJob {
+  id            String    @id @default(cuid())
+  userId        String
+  jobId         String    // External job identifier
+  jobTitle      String
+  companyName   String
+  savedAt       DateTime  @default(now())
+  
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, jobId])
+}
