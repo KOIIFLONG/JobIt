@@ -9,28 +9,34 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// User model with comprehensive authentication and profile details
+// User model with robust authentication and profile details
 model User {
-  id            String    @id @default(cuid())
+  // UUID-based auto-generated ID
+  id            String    @id @default(uuid())
+  
+  // Unique email with explicit unique constraint
   email         String    @unique
-  username      String?   @unique
-  password      String    // Hashed password
+  
+  // Password will be stored as hashed value (enforced in application logic)
+  password      String
+  
+  // Optional profile details
+  username      String?   
   firstName     String?
   lastName      String?
-  profileImage  String?
   
-  // Authentication and security fields
-  emailVerified DateTime?
+  // Automatic timestamp for creation
+  createdAt     DateTime  @default(now())
+  
+  // Additional metadata
   lastLogin     DateTime?
+  emailVerified Boolean   @default(false)
   
-  // Job favorites and interactions
+  // Relationships and additional fields
   savedJobs     SavedJob[]
   
-  // Account metadata
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  
-  // Optional additional fields for profile
+  // Optional profile information
+  profileImage  String?
   location      String?
   bio           String?
   skills        String[]
@@ -38,14 +44,16 @@ model User {
 
 // Model to track user's saved job postings
 model SavedJob {
-  id            String    @id @default(cuid())
+  id            String    @id @default(uuid())
   userId        String
   jobId         String    // External job identifier
   jobTitle      String
   companyName   String
   savedAt       DateTime  @default(now())
   
+  // Relationship to User with cascading delete
   user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   
+  // Ensure unique combination of user and job
   @@unique([userId, jobId])
 }
