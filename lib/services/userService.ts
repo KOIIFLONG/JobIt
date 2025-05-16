@@ -1,8 +1,8 @@
 import bcrypt from 'bcrypt';
 import { UserRegistration, UserRegistrationSchema } from '../validation/user';
 
-// Simulate a user database (in a real app, this would be a database connection)
-const users: Array<{username: string, email: string, hashedPassword: string}> = [];
+// Expose users array for testing purposes
+export const users: Array<{username: string, email: string, hashedPassword: string}> = [];
 
 export class UserService {
   static async registerUser(userData: UserRegistration) {
