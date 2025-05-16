@@ -1,17 +1,14 @@
 import bcrypt from 'bcrypt';
+import { PrismaClient, User as PrismaUser } from '@prisma/client';
 
-/**
- * Represents a User in the system
- */
-export interface UserAttributes {
-  id?: string;
+const prisma = new PrismaClient();
+
+// Input validation interface
+export interface UserCreateInput {
   email: string;
   password: string;
   firstName?: string;
   lastName?: string;
-  savedJobIds?: string[];
-  createdAt?: Date;
-  updatedAt?: Date;
 }
 
 export class User {
@@ -62,12 +59,12 @@ export class User {
   }
 
   /**
-   * Create a new user with validated attributes
+   * Create a new user
    * @param userData User creation data
-   * @returns Validated user attributes
+   * @returns Created user
    * @throws Error for invalid user data
    */
-  static async create(userData: UserAttributes): Promise<UserAttributes> {
+  static async create(userData: UserCreateInput): Promise<PrismaUser> {
     // Validate email
     if (!this.validateEmail(userData.email)) {
       throw new Error('Invalid email format');
@@ -78,16 +75,38 @@ export class User {
       throw new Error('Password does not meet requirements');
     }
 
+    // Check if email already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email: userData.email }
+    });
+
+    if (existingUser) {
+      throw new Error('Email already in use');
+    }
+
     // Hash password
     const hashedPassword = await this.hashPassword(userData.password);
 
-    // Return user object with hashed password
-    return {
-      ...userData,
-      password: hashedPassword,
-      savedJobIds: userData.savedJobIds || [],
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
+    // Create user in database
+    return prisma.user.create({
+      data: {
+        email: userData.email,
+        password: hashedPassword,
+        firstName: userData.firstName,
+        lastName: userData.lastName
+      }
+    });
+  }
+
+  /**
+   * Find user by email
+   * @param email User's email
+   * @returns User or null
+   */
+  static async findByEmail(email: string): Promise<PrismaUser | null> {
+    return prisma.user.findUnique({ where: { email } });
   }
 }
+
+// Export Prisma client for use in other parts of the application
+export { prisma };
