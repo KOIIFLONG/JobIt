@@ -1,51 +1,62 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// Prisma schema for user authentication and job favorites
 
 generator client {
   provider = "prisma-client-js"
 }
 
-// Use SQLite for development, can be easily switched to PostgreSQL/MySQL for production
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql" // Changed to PostgreSQL for production-ready setup
+  url      = env("DATABASE_URL")
 }
 
 // User model with comprehensive authentication and profile fields
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  username      String?   @unique
-  password      String    // Hashed password
-  firstName     String?
-  lastName      String?
-  profilePicUrl String?
+  // Use UUID for globally unique identifier
+  id            String      @id @default(uuid())
   
-  // Authentication and security fields
-  emailVerified DateTime?
+  // Unique email with explicit index and constraint
+  email         String      @unique @db.VarChar(255)
+  
+  // Hashed password (explicitly marked for hashing)
+  passwordHash  String      @db.VarChar(255)
+  
+  // Optional profile fields
+  username      String?     @unique @db.VarChar(100)
+  firstName     String?     @db.VarChar(100)
+  lastName      String?     @db.VarChar(100)
+  profilePicUrl String?     @db.Text
+  
+  // Authentication tracking
+  emailVerified Boolean     @default(false)
   lastLogin     DateTime?
+  
+  // Automated timestamp tracking
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
   
   // Saved jobs relationship
   savedJobs     SavedJob[]
   
-  // Timestamps for tracking
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  // Indexing for performance
+  @@index([email])
+  @@index([username])
 }
 
 // Model for tracking saved jobs
 model SavedJob {
-  id            String   @id @default(cuid())
+  id            String      @id @default(uuid())
   userId        String
-  jobId         String   // External job identifier from job search API
-  jobTitle      String
-  companyName   String
-  jobUrl        String?
-  savedAt       DateTime @default(now())
+  jobId         String      @db.VarChar(255)
+  jobTitle      String      @db.VarChar(255)
+  companyName   String      @db.VarChar(255)
+  jobUrl        String?     @db.Text
+  savedAt       DateTime    @default(now())
   
-  // Relationship to User
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Relationship to User with cascading delete
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   // Ensure unique constraint on user-job combination
   @@unique([userId, jobId])
+  @@index([userId])
+  @@index([jobId])
 }
