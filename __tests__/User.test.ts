@@ -1,7 +1,20 @@
-import { describe, it, expect } from 'vitest';
-import { User, UserAttributes } from '../models/User';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { User, prisma } from '../models/User';
+import { PrismaClient } from '@prisma/client';
 
 describe('User Model', () => {
+  let originalPrismaClient: PrismaClient;
+
+  beforeAll(() => {
+    // Store original Prisma client to reset after tests
+    originalPrismaClient = prisma;
+  });
+
+  afterAll(async () => {
+    // Clean up and disconnect
+    await prisma.$disconnect();
+  });
+
   describe('Email Validation', () => {
     it('should validate correct email formats', () => {
       const validEmails = [
@@ -51,8 +64,8 @@ describe('User Model', () => {
   });
 
   describe('User Creation', async () => {
-    const validUserData: UserAttributes = {
-      email: 'test@example.com',
+    const validUserData = {
+      email: `test-${Date.now()}@example.com`,
       password: 'validpassword123',
       firstName: 'John',
       lastName: 'Doe'
@@ -65,19 +78,39 @@ describe('User Model', () => {
       expect(user.firstName).toBe(validUserData.firstName);
       expect(user.lastName).toBe(validUserData.lastName);
       expect(user.password).not.toBe(validUserData.password); // Should be hashed
-      expect(user.savedJobIds).toEqual([]);
+      expect(user.id).toBeDefined(); // UUID should be generated
       expect(user.createdAt).toBeDefined();
       expect(user.updatedAt).toBeDefined();
     });
 
+    it('should throw error for duplicate email', async () => {
+      const duplicateEmail = `duplicate-${Date.now()}@example.com`;
+      const userData = { 
+        ...validUserData, 
+        email: duplicateEmail 
+      };
+
+      // Create first user
+      await User.create(userData);
+
+      // Try to create second user with same email
+      await expect(User.create(userData)).rejects.toThrow('Email already in use');
+    });
+
     it('should throw error for invalid email', async () => {
-      const invalidUser = { ...validUserData, email: 'invalid-email' };
+      const invalidUser = { 
+        ...validUserData, 
+        email: 'invalid-email' 
+      };
       
       await expect(User.create(invalidUser)).rejects.toThrow('Invalid email format');
     });
 
     it('should throw error for invalid password', async () => {
-      const shortPasswordUser = { ...validUserData, password: '1234' };
+      const shortPasswordUser = { 
+        ...validUserData, 
+        password: '1234' 
+      };
       
       await expect(User.create(shortPasswordUser)).rejects.toThrow('Password does not meet requirements');
     });
