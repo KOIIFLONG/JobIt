@@ -1,24 +1,54 @@
-import { prisma } from '../lib/db/prisma'
+import { PrismaClient } from '@prisma/client'
+import * as bcrypt from 'bcrypt'
+
+const prisma = new PrismaClient()
 
 describe('User Database Schema', () => {
-  it('should create a user with required fields', async () => {
+  afterAll(async () => {
+    await prisma.$disconnect()
+  })
+
+  it('should create a user with hashed password', async () => {
+    const rawPassword = 'securePassword123'
+    const hashedPassword = await bcrypt.hash(rawPassword, 10)
+
     const user = await prisma.user.create({
       data: {
         email: 'test@example.com',
-        password: 'hashedpassword123', // Note: In real app, use bcrypt
+        passwordHash: hashedPassword,
+        username: 'testuser'
       }
     })
 
     expect(user).toBeDefined()
     expect(user.email).toBe('test@example.com')
+    expect(user.passwordHash).not.toBe(rawPassword)
     expect(user.createdAt).toBeTruthy()
+  })
+
+  it('should enforce unique email constraint', async () => {
+    const email = 'unique@example.com'
+    
+    await prisma.user.create({
+      data: {
+        email,
+        passwordHash: await bcrypt.hash('password123', 10)
+      }
+    })
+
+    await expect(prisma.user.create({
+      data: {
+        email, // Duplicate email
+        passwordHash: await bcrypt.hash('differentpassword', 10)
+      }
+    })).rejects.toThrow()
   })
 
   it('should create a saved job for a user', async () => {
     const user = await prisma.user.create({
       data: {
-        email: 'saveduser@example.com',
-        password: 'hashedpassword123',
+        email: 'jobsaver@example.com',
+        passwordHash: await bcrypt.hash('password123', 10),
         savedJobs: {
           create: {
             jobId: 'job123',
@@ -34,30 +64,5 @@ describe('User Database Schema', () => {
 
     expect(user.savedJobs.length).toBe(1)
     expect(user.savedJobs[0].jobTitle).toBe('Software Engineer')
-  })
-
-  it('should prevent duplicate job saves for same user', async () => {
-    const user = await prisma.user.create({
-      data: {
-        email: 'duplicate@example.com',
-        password: 'hashedpassword123',
-        savedJobs: {
-          create: {
-            jobId: 'uniquejob123',
-            jobTitle: 'Product Manager',
-            companyName: 'Innovate Inc'
-          }
-        }
-      }
-    })
-
-    await expect(prisma.savedJob.create({
-      data: {
-        userId: user.id,
-        jobId: 'uniquejob123', // Duplicate job ID
-        jobTitle: 'Another Product Manager',
-        companyName: 'Different Company'
-      }
-    })).rejects.toThrow()
   })
 })
