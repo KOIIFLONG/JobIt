@@ -1,0 +1,46 @@
+// This is your Prisma schema file
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model with specific constraints
+model User {
+  // UUID as primary key
+  id        String   @id @default(uuid())
+  
+  // Unique email with validation
+  email     String   @unique
+  
+  // Hashed password, never stored as plain text
+  password  String
+  
+  // Optional profile information
+  firstName String?
+  lastName  String?
+  
+  // Automatically managed timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relation to saved jobs (Optional, depends on job model)
+  savedJobs  SavedJob[]
+}
+
+// Saved Jobs model to track user's favorite jobs
+model SavedJob {
+  id        String   @id @default(uuid())
+  userId    String
+  jobId     String   // External job identifier
+  savedAt   DateTime @default(now())
+  
+  // Relation to User
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Ensure unique combination of user and job
+  @@unique([userId, jobId])
+}
