@@ -4,9 +4,5 @@
     "prisma:migrate": "prisma migrate dev --name user_schema_init",
     "prisma:migrate:prod": "prisma migrate deploy",
     "test": "prisma generate && jest"
-  },
-  "jest": {
-    "preset": "ts-jest",
-    "testEnvironment": "node"
   }
 }
