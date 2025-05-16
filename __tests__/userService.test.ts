@@ -1,8 +1,16 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { UserService } from '../lib/services/userService';
 import bcrypt from 'bcrypt';
 
 describe('UserService', () => {
+  // Import the actual implementation to access and reset users
+  const userServiceModule = require('../lib/services/userService');
+
+  beforeEach(() => {
+    // Reset the users array before each test
+    userServiceModule.users.length = 0;
+  });
+
   const validUser = {
     username: 'testuser',
     email: 'test@example.com',
@@ -52,8 +60,7 @@ describe('UserService', () => {
   it('should hash the password correctly', async () => {
     const result = await UserService.registerUser(validUser);
     
-    // Find the user in the internal users array (this is just for testing)
-    const storedUser = (await import('../lib/services/userService')).users.find(
+    const storedUser = userServiceModule.users.find(
       u => u.email === validUser.email
     );
 
