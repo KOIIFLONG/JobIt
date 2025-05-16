@@ -1,17 +1,12 @@
 {
   "scripts": {
     "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev",
+    "prisma:migrate": "prisma migrate dev --name user_schema_init",
+    "prisma:migrate:prod": "prisma migrate deploy",
     "test": "prisma generate && jest"
   },
   "jest": {
     "preset": "ts-jest",
     "testEnvironment": "node"
-  },
-  "dependencies": {
-    "bcrypt": "^6.0.0"
-  },
-  "devDependencies": {
-    "@types/bcrypt": "^5.0.2"
   }
 }
