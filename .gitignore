@@ -37,3 +37,8 @@ next-env.d.ts
 
 .env
 env
+
+# Prisma
+prisma/migrations
+/prisma/migrations
+*.log
