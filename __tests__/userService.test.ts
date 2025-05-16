@@ -1,14 +1,11 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { UserService } from '../lib/services/userService';
+import { UserService, users } from '../lib/services/userService';
 import bcrypt from 'bcrypt';
 
 describe('UserService', () => {
-  // Import the actual implementation to access and reset users
-  const userServiceModule = require('../lib/services/userService');
-
   beforeEach(() => {
     // Reset the users array before each test
-    userServiceModule.users.length = 0;
+    users.length = 0;
   });
 
   const validUser = {
@@ -60,7 +57,7 @@ describe('UserService', () => {
   it('should hash the password correctly', async () => {
     const result = await UserService.registerUser(validUser);
     
-    const storedUser = userServiceModule.users.find(
+    const storedUser = users.find(
       u => u.email === validUser.email
     );
 
