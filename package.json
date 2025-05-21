@@ -60,10 +60,12 @@
     "zod": "^3.21.4"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
     "@types/uuid": "^9.0.8",
     "@typescript-eslint/eslint-plugin": "^6.12.0",
     "@typescript-eslint/parser": "^6.12.0",
+    "@vitejs/plugin-react": "^4.4.1",
     "eslint": "^8.44.0",
     "eslint-config-prettier": "^9.0.0",
     "eslint-config-standard-with-typescript": "^40.0.0",
@@ -73,6 +75,7 @@
     "eslint-plugin-n": "^16.3.1",
     "eslint-plugin-promise": "^6.1.1",
     "eslint-plugin-react": "^7.32.2",
+    "jsdom": "^26.1.0",
     "prettier": "^3.0.0",
     "prettier-plugin-tailwindcss": "^0.4.0",
     "typescript": "^5.1.6",

@@ -1,7 +1,13 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { EmailLoginForm } from './EmailLoginForm';
-import { Toaster } from './ui/toaster';
+
+// Mock the toast hook
+vi.mock('./ui/use-toast', () => ({
+  useToast: () => ({
+    toast: vi.fn()
+  })
+}));
 
 describe('EmailLoginForm', () => {
   const mockOnLogin = vi.fn();
@@ -11,24 +17,14 @@ describe('EmailLoginForm', () => {
   });
 
   it('renders email input and login button', () => {
-    render(
-      <>
-        <EmailLoginForm onLogin={mockOnLogin} />
-        <Toaster />
-      </>
-    );
+    render(<EmailLoginForm onLogin={mockOnLogin} />);
 
     expect(screen.getByTestId('email-input')).toBeInTheDocument();
     expect(screen.getByTestId('login-button')).toBeInTheDocument();
   });
 
   it('validates email input', async () => {
-    render(
-      <>
-        <EmailLoginForm onLogin={mockOnLogin} />
-        <Toaster />
-      </>
-    );
+    render(<EmailLoginForm onLogin={mockOnLogin} />);
 
     const emailInput = screen.getByTestId('email-input');
     const loginButton = screen.getByTestId('login-button');
@@ -45,12 +41,7 @@ describe('EmailLoginForm', () => {
   it('calls onLogin with email when form is submitted', async () => {
     mockOnLogin.mockResolvedValue(undefined);
 
-    render(
-      <>
-        <EmailLoginForm onLogin={mockOnLogin} />
-        <Toaster />
-      </>
-    );
+    render(<EmailLoginForm onLogin={mockOnLogin} />);
 
     const emailInput = screen.getByTestId('email-input');
     const loginButton = screen.getByTestId('login-button');
@@ -66,12 +57,7 @@ describe('EmailLoginForm', () => {
   it('handles login failure', async () => {
     mockOnLogin.mockRejectedValue(new Error('Login failed'));
 
-    render(
-      <>
-        <EmailLoginForm onLogin={mockOnLogin} />
-        <Toaster />
-      </>
-    );
+    render(<EmailLoginForm onLogin={mockOnLogin} />);
 
     const emailInput = screen.getByTestId('email-input');
     const loginButton = screen.getByTestId('login-button');
